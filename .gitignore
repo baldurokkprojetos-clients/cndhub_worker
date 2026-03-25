@@ -7,6 +7,7 @@ venv/
 *.log
 *.db
 *.pdf
+worker_log.txt
 screenshot_*.png
 debug_*.png
 core/User Data/
