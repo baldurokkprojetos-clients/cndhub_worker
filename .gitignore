@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+venv/
+*.log
+*.db
+*.pdf
+screenshot_*.png
+debug_*.png
+core/User Data/
+core/uc_profile/
+core/uc_profile_projudi/
