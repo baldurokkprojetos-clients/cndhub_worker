@@ -1,5 +1,6 @@
 from playwright.sync_api import sync_playwright
 import logging
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,7 @@ class BrowserManager:
         
         if not self._browser:
             logger.info("Iniciando instância única do Chromium...")
-            # Headless configurável. Deixando False para debug inicial, mas em produção deve puxar de variável de ambiente.
-            self._browser = self._playwright.chromium.launch(headless=False)
+            self._browser = self._playwright.chromium.launch(headless=settings.WORKER_HEADLESS)
             self._context = self._browser.new_context(
                 accept_downloads=True,
                 viewport={"width": 1280, "height": 720}

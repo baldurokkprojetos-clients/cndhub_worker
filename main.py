@@ -1,6 +1,8 @@
 import time
 import requests
 import logging
+import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from core.config import settings
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -28,7 +30,8 @@ def get_pending_jobs():
     """Busca jobs pendentes na API do Backend."""
     url = f"{API_BASE_URL}/api/v1/jobs/pending"
     try:
-        response = requests.get(url, params={"limit": 5}, headers=get_headers())
+        limit = max(5, settings.MAX_CONCURRENT_BROWSERS)
+        response = requests.get(url, params={"limit": limit}, headers=get_headers())
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
@@ -121,7 +124,8 @@ def process_job(job):
         logger.error(f"[FALHA] Erro ao processar job {job_id}: {e}", exc_info=True)
         update_job_status(job_id, "error", error_msg=str(e))
     finally:
-        kill_chromedriver_processes()
+        if settings.MAX_CONCURRENT_BROWSERS <= 1:
+            kill_chromedriver_processes()
 
 def worker_loop():
     logger.info("Iniciando Worker RPA Independente...")
@@ -131,8 +135,18 @@ def worker_loop():
         jobs = get_pending_jobs()
         if jobs:
             logger.info(f"Encontrados {len(jobs)} jobs pendentes.")
-            for job in jobs:
-                process_job(job)
+            max_workers = max(1, settings.MAX_CONCURRENT_BROWSERS)
+            if max_workers <= 1:
+                for job in jobs:
+                    process_job(job)
+            else:
+                with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                    futures = [executor.submit(process_job, job) for job in jobs[:max_workers]]
+                    for future in as_completed(futures):
+                        try:
+                            future.result()
+                        except Exception as e:
+                            logger.error(f"[FALHA] Execução paralela do job: {e}", exc_info=True)
         else:
             logger.debug("Nenhum job pendente. Aguardando...")
             

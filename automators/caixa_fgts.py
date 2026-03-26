@@ -7,6 +7,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver as uc
 from .base import BaseAutomator
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,8 @@ class CaixaFgtsAutomator(BaseAutomator):
         options.add_experimental_option("prefs", prefs)
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+        if settings.WORKER_HEADLESS:
+            options.add_argument("--headless=new")
         
         user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "worker", "core", "uc_profile"))
         

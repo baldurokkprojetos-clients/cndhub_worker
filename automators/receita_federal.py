@@ -9,6 +9,7 @@ import time
 import os
 import glob
 from .base import BaseAutomator
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +45,8 @@ class ReceitaFederalAutomator(BaseAutomator):
         download_dir.mkdir(parents=True, exist_ok=True)
         
         options = uc.ChromeOptions()
-        # Não rodar headless para debug visual (o usuário pode ver o que está acontecendo)
-        # options.add_argument("--headless")
+        if settings.WORKER_HEADLESS:
+            options.add_argument("--headless=new")
         
         # Configurar download path e desativar prompt
         prefs = {

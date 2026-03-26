@@ -11,6 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from core.captcha_solver import solve_captcha_with_gemini
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,8 @@ class PrefeituraGoianiaAutomator(BaseAutomator):
         options.add_experimental_option("prefs", prefs)
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
+        if settings.WORKER_HEADLESS:
+            options.add_argument("--headless=new")
         
         user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "worker", "core", "uc_profile"))
         
