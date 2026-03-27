@@ -14,7 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver as uc
 from .base import BaseAutomator
-from core.config import settings, get_chrome_major_version
+from core.config import settings, get_chrome_major_version, cleanup_uc_chromedriver_cache
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ class TrabalhistaTstAutomator(BaseAutomator):
             "user_data_dir": user_data_dir
         }
         chrome_major = get_chrome_major_version()
+        cleanup_uc_chromedriver_cache(chrome_major)
         if chrome_major:
             chrome_kwargs["version_main"] = chrome_major
         driver = uc.Chrome(**chrome_kwargs)

@@ -11,7 +11,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from core.captcha_solver import solve_captcha_with_gemini
-from core.config import settings, get_chrome_major_version
+from core.config import settings, get_chrome_major_version, cleanup_uc_chromedriver_cache
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +43,7 @@ class PrefeituraGoianiaAutomator(BaseAutomator):
             "user_data_dir": user_data_dir
         }
         chrome_major = get_chrome_major_version()
+        cleanup_uc_chromedriver_cache(chrome_major)
         if chrome_major:
             chrome_kwargs["version_main"] = chrome_major
         driver = uc.Chrome(**chrome_kwargs)

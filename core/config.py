@@ -1,6 +1,8 @@
 import os
 import re
 import subprocess
+import glob
+import logging
 from dotenv import load_dotenv
 
 try:
@@ -22,6 +24,7 @@ class WorkerSettings:
     BROWSER_IDLE_TIMEOUT_MINUTES = 5
 
 settings = WorkerSettings()
+logger = logging.getLogger(__name__)
 
 def get_chrome_major_version() -> int | None:
     env_version = os.getenv("CHROME_VERSION_MAIN")
@@ -70,3 +73,29 @@ def get_chrome_major_version() -> int | None:
     if not match:
         return None
     return int(match.group(1))
+
+def cleanup_uc_chromedriver_cache(version_main: int | None) -> None:
+    if not version_main:
+        return
+    cache_dirs = []
+    home_dir = os.path.expanduser("~")
+    cache_dirs.append(os.path.join(home_dir, ".undetected_chromedriver"))
+    local_app_data = os.getenv("LOCALAPPDATA")
+    if local_app_data:
+        cache_dirs.append(os.path.join(local_app_data, "undetected_chromedriver"))
+    app_data = os.getenv("APPDATA")
+    if app_data:
+        cache_dirs.append(os.path.join(app_data, "undetected_chromedriver"))
+    cache_dirs = [d for d in cache_dirs if d and os.path.isdir(d)]
+    if not cache_dirs:
+        return
+    for cache_dir in cache_dirs:
+        try:
+            candidates = glob.glob(os.path.join(cache_dir, "**", "*chromedriver*.exe"), recursive=True)
+            for candidate in candidates:
+                try:
+                    os.remove(candidate)
+                except Exception as e:
+                    logger.warning(f"Falha ao remover chromedriver cache {candidate}: {e}")
+        except Exception as e:
+            logger.warning(f"Falha ao varrer cache do chromedriver em {cache_dir}: {e}")
