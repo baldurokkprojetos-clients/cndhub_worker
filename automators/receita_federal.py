@@ -8,54 +8,10 @@ from pathlib import Path
 import time
 import os
 import glob
-import re
-import subprocess
-import winreg
 from .base import BaseAutomator
-from core.config import settings
+from core.config import settings, get_chrome_major_version
 
 logger = logging.getLogger(__name__)
-
-def _get_chrome_major_version() -> int | None:
-    registry_keys = [
-        (winreg.HKEY_CURRENT_USER, r"Software\Google\Chrome\BLBeacon"),
-        (winreg.HKEY_LOCAL_MACHINE, r"Software\Google\Chrome\BLBeacon"),
-        (winreg.HKEY_LOCAL_MACHINE, r"Software\WOW6432Node\Google\Chrome\BLBeacon")
-    ]
-    version = None
-    for hive, path in registry_keys:
-        try:
-            with winreg.OpenKey(hive, path) as key:
-                version, _ = winreg.QueryValueEx(key, "version")
-                break
-        except OSError:
-            continue
-    if not version:
-        chrome_paths = [
-            r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-            r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-        ]
-        for chrome_path in chrome_paths:
-            if os.path.exists(chrome_path):
-                try:
-                    result = subprocess.run([chrome_path, "--version"], capture_output=True, text=True, check=False)
-                    version = result.stdout.strip() or result.stderr.strip()
-                    if version:
-                        break
-                except Exception:
-                    continue
-    if not version:
-        try:
-            result = subprocess.run(["chrome", "--version"], capture_output=True, text=True, check=False)
-            version = result.stdout.strip() or result.stderr.strip()
-        except Exception:
-            version = None
-    if not version:
-        return None
-    match = re.search(r"(\d+)\.", version)
-    if not match:
-        return None
-    return int(match.group(1))
 
 class ReceitaFederalAutomator(BaseAutomator):
     """
@@ -119,7 +75,7 @@ class ReceitaFederalAutomator(BaseAutomator):
             "options": options,
             "user_data_dir": user_data_dir
         }
-        chrome_major = _get_chrome_major_version()
+        chrome_major = get_chrome_major_version()
         if chrome_major:
             chrome_kwargs["version_main"] = chrome_major
         driver = uc.Chrome(**chrome_kwargs)

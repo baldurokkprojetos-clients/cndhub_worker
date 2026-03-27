@@ -14,7 +14,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver as uc
 from .base import BaseAutomator
-from core.config import settings
+from core.config import settings, get_chrome_major_version
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,14 @@ class TrabalhistaTstAutomator(BaseAutomator):
         
         user_data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "worker", "core", "uc_profile"))
         
-        driver = uc.Chrome(options=options, user_data_dir=user_data_dir)
+        chrome_kwargs = {
+            "options": options,
+            "user_data_dir": user_data_dir
+        }
+        chrome_major = get_chrome_major_version()
+        if chrome_major:
+            chrome_kwargs["version_main"] = chrome_major
+        driver = uc.Chrome(**chrome_kwargs)
         
         try:
             url = "https://www.tst.jus.br/certidao1"
