@@ -12,7 +12,10 @@ API_BASE_URL = settings.API_BASE_URL
 HUB_API_KEY = settings.HUB_API_KEY
 
 def get_headers():
-    return {"X-API-Key": HUB_API_KEY}
+    headers = {"X-API-Key": HUB_API_KEY}
+    if settings.WORKER_ID:
+        headers["X-Worker-Id"] = settings.WORKER_ID
+    return headers
 
 def kill_chromedriver_processes():
     """Mata todos os processos do chromedriver e chrome pendentes (para servidores independentes)."""
@@ -31,11 +34,13 @@ def get_pending_jobs():
     url = f"{API_BASE_URL}/api/v1/jobs/pending"
     try:
         limit = max(5, settings.MAX_CONCURRENT_BROWSERS)
-        response = requests.get(url, params={"limit": limit}, headers=get_headers())
+        response = requests.get(url, params={"limit": limit}, headers=get_headers(), timeout=10)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        logger.error(f"Erro ao buscar jobs pendentes na API: {e}")
+        status = getattr(e.response, "status_code", None)
+        body = getattr(e.response, "text", None)
+        logger.error(f"Erro ao buscar jobs pendentes na API: {e} | status={status} | body={body}")
         return []
 
 def update_job_status(job_id, status, error_msg=None):
@@ -45,11 +50,13 @@ def update_job_status(job_id, status, error_msg=None):
         payload = {"status": status}
         if error_msg:
             payload["mensagem_erro"] = error_msg
-        response = requests.post(url, json=payload, headers=get_headers())
+        response = requests.post(url, json=payload, headers=get_headers(), timeout=10)
         response.raise_for_status()
         return True
     except requests.RequestException as e:
-        logger.error(f"Erro ao atualizar status do job {job_id}: {e}")
+        status_code = getattr(e.response, "status_code", None)
+        body = getattr(e.response, "text", None)
+        logger.error(f"Erro ao atualizar status do job {job_id}: {e} | status={status_code} | body={body}")
         return False
 
 def update_certidao_via_api(cliente_id, tipo_certidao_id, status, file_path=None, error_msg=None):
